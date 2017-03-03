@@ -4,21 +4,34 @@ Date: 2017-03-03T13:18:04
 Tags:
 
 @require[
+  (prefix-in s: (only-in scribble/manual hash-lang))
   (for-label racket/base racket/format racket/list syntax/parse
              reprovide/reprovide)
 ]
 
 @(define-syntax-rule (lang id)
-    @elem{@hash-lang[] @racket[id]})
+   (racket-pygments @elem{@s:hash-lang[] @racket[id]}))
 
 @(define (inset . content)
    (apply nested #:style 'inset content))
+
+@(define-syntax-rule (rkt x)
+   (racket-pygments (racket x)))
+
+@(define-syntax-rule (hash-lang)
+   (racket-pygments (s:hash-lang)))
+
+@(define-syntax-rule (racket-pygments x)
+   (elem #:style "RktWrap" x))
+
+@(define-syntax-rule (tt x)
+   (code x))
 
 @; =============================================================================
 
 @emph{posted by Leif Andersen and Ben Greenman}
 
-Tired of writing @racket[(require (for-syntax syntax/parse))] at the top of your
+Tired of writing @rkt[(require (for-syntax syntax/parse))] at the top of your
 Racket programs?
 This post shows how to make a @hash-lang[] to customize your default programming
 environment.
@@ -29,9 +42,9 @@ Let's build a language @lang[scratch]:
 
 @itemlist[
 @item{
-  that loads the @racket[racket/base], @racket[racket/format],
-  @racket[racket/list], and @racket[syntax/parse] (at @seclink["phases" #:doc
-  '(lib "scribblings/guide/guide.scrbl")]{phase} 1) libraries;
+  that loads the @rkt[racket/base], @rkt[racket/format],
+  @rkt[racket/list], and @rkt[syntax/parse] (at @seclink["phases" #:doc
+  '(lib "scribblings/guide/guide.scrbl")]{phase 1}) libraries;
 }
 @item{
   and enables Scribble's @seclink["reader"
@@ -45,7 +58,7 @@ We'll follow a three-step recipe:
  @inset[
   @itemlist[#:style 'ordered
   @item{
-    build an empty @racket[scratch] library (@secref{setup})
+    build an empty @rkt[scratch] library (@secref{setup})
   }
   @item{
     load the libraries (@secref{require})
@@ -64,13 +77,13 @@ DrRacket (@secref{drracket}).
 First we need to make a @tt{scratch/} directory with two files: an @tt{info.rkt}
 file and a @tt{main.rkt} file.
 
-@inset[
-  @para{@exec{$ mkdir scratch; cd scratch}}
+@inset[@verbatim{
+  $ mkdir scratch; cd scratch
 
-  @para{@exec{$ touch info.rkt}}
+  $ touch info.rkt
 
-  @para{@exec{$ touch main.rkt}}
-]
+  $ touch main.rkt
+}]
 
 Inside the @tt{info.rkt} file, write:
 
@@ -107,14 +120,14 @@ You are now the proud parent of a new Racket package.
 
 @section[#:tag "require"]{Combining Libraries}
 
-Any program can now @racket[(require scratch)] to import all bindings provided
+Any program can now @rkt[(require scratch)] to import all bindings provided
 by the @tt{main.rkt} file.
 Our next step is to reprovide bindings from other libraries in @tt{main.rkt}.
 
 Since we want to use @tt{scratch} as a language, we also need to specify how to
 @seclink["reader" #:doc '(lib "scribblings/reference/reference.scrbl")]{read}
 a @lang[scratch] program.
-The @racket[syntax/module-reader] language provides a shorthand for doing so.
+The @rkt[syntax/module-reader] language provides a shorthand for doing so.
 
 Updated @tt{main.rkt}:
 
@@ -133,17 +146,17 @@ Updated @tt{main.rkt}:
 }|]
 
 
-The @racket[provide] form declares the exports of the @racket[scratch] module.
-In other words, if another module contains the form @racket[(require scratch)]
-then that module will import bindings from @racket[racket/base],
-@racket[racket/format], @racket[racket/list], and @racket[syntax/parse].
+The @rkt[provide] form declares the exports of the @rkt[scratch] module.
+In other words, if another module contains the form @rkt[(require scratch)]
+then that module will import bindings from @rkt[racket/base],
+@rkt[racket/format], @rkt[racket/list], and @rkt[syntax/parse].
 
-The @racket[reader] submodule is written in the @racket[syntax/module-reader]
+The @rkt[reader] submodule is written in the @rkt[syntax/module-reader]
 language.
 This submodule imports all bindings from its enclosing module
-(@racket[scratch], or to be slightly more precise ``the toplevel module in the
+(@rkt[scratch], or to be slightly more precise ``the toplevel module in the
 file @tt{scratch/main.rkt}'') and defines a language that provides those
-bindings and uses the reader from @racket[racket/base].
+bindings and uses the reader from @rkt[racket/base].
 
 In short, this code does what we want.
 
@@ -161,7 +174,7 @@ In short, this code does what we want.
 Yes it does.
 
 @margin-note{
-  Annoyed that the @racket[require] and @racket[provide] forms are so similar?
+  Annoyed that the @rkt[require] and @rkt[provide] forms are so similar?
   There's a library for that: @other-doc['(lib
   "reprovide/scribblings/reprovide.scrbl")].
 }
@@ -216,8 +229,8 @@ To test that it works, let's embed some C syntax in our Racket program:
   Make sure to add @racket{at-exp-lib} to the @tt{deps} list in your
   @tt{info.rkt} file.}
 @margin-note{
-  Using @racket[prefix-in] is not necessary; it just clarifies where
-   @racket[read] and @racket[read-syntax] come from.}
+  Using @rkt[prefix-in] is not necessary; it just clarifies where
+   @rkt[read] and @rkt[read-syntax] come from.}
 @margin-note{
   If you think inline C @emph{strings} are interesting, you should definitely
   watch Jay McCarthy's RacketCon 2016
@@ -242,7 +255,8 @@ To make @lang[scratch] the default language for new files in DrRacket:
     Click the radio button for ``The Racket Language'', then click the ``Show Details'' button at the bottom of the window.
   }
   @item{
-    Type @tt{#lang scratch} in the text box labeled ``Automatic @tt{#}lang line''.
+    @; TODO 
+    Type @tt{Hlang scratch} in the text box labeled ``Automatic @tt{H}lang line''.
   }
 ]]
 
